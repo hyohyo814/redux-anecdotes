@@ -1,15 +1,16 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { createAnec } from '../reducers/anecdoteReducer';
+import { useDispatch } from 'react-redux';
+import { createPost } from '../reducers/anecdoteReducer';
+import { setNotif } from '../reducers/notificationReducer';
 
 const AnecdoteForm = () => {
   const dispatch = useDispatch();
-  const anecdotes = useSelector((state) => state);
 
-  const addPost = (event) => {
+  const addPost = async (event) => {
     event.preventDefault();
     const post = event.target.newAnecdote.value;
     event.target.newAnecdote.value = '';
-    dispatch(createAnec(post));
+    dispatch(createPost(post));
+    dispatch(setNotif(`${post} added to list`, 3));
   };
 
   return (

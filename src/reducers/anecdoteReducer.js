@@ -1,60 +1,51 @@
+import { createSlice } from '@reduxjs/toolkit';
+import anecService from '../services/anecdotes';
+
 const _ = require('lodash');
 
-const anecdotesAtStart = [
-  'If it hurts, do it more often',
-  'Adding manpower to a late software project makes it later!',
-  'The first 90 percent of the code accounts for the first 90 percent of the development time...The remaining 10 percent of the code accounts for the other 90 percent of the development time.',
-  'Any fool can write code that a computer can understand. Good programmers write code that humans can understand.',
-  'Premature optimization is the root of all evil.',
-  'Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.',
-];
-
-const getId = () => (100000 * Math.random()).toFixed(0);
-
-const asObject = (anecdote) => {
-  return {
-    content: anecdote,
-    id: getId(),
-    votes: 0,
-  };
-};
-
-const initialState = anecdotesAtStart.map(asObject);
-
-// action creators
-export const vote = (id) => {
-  return {
-    type: 'VOTE',
-    payload: id,
-  };
-};
-
-export const createAnec = (content) => {
-  return {
-    type: 'NEW_POST',
-    payload: content,
-  };
-};
-
-const reducer = (state = initialState, action) => {
-  console.log('state now: ', state);
-  console.log('action', action);
-
-  switch (action.type) {
-    case 'NEW_POST': {
-      return [...state, asObject(action.payload)];
-    }
-    case 'VOTE': {
-      const id = action.payload;
-      const anecVote = state.find((n) => n.id === id);
-      const updVote = { ...anecVote, votes: anecVote.votes + 1 };
-      const updState = state.map((v) => (v.id !== id ? v : updVote));
-      const sortState = _.orderBy(updState, ['votes'], ['desc']);
+const anecdoteSlice = createSlice({
+  name: 'anecdotes',
+  initialState: [],
+  reducers: {
+    appendPost(state, action) {
+      state.push(action.payload);
+    },
+    setPosts(state, action) {
+      const sortState = _.orderBy(action.payload, ['votes'], ['desc'])
       return sortState;
-    }
-    default:
-      return state;
-  }
+    },
+    updateVotes(state, action) {
+      const update = state.map((obj) =>
+        obj.id === action.payload.id ? action.payload : obj
+      );
+      const sortState = _.orderBy(update, ['votes'], ['desc']);
+      return sortState;
+    },
+  },
+});
+
+export const { createAnnec, vote, appendPost, setPosts, updateVotes } =
+  anecdoteSlice.actions;
+
+export const initAnec = () => {
+  return async (dispatch) => {
+    const anecdotes = await anecService.getAll();
+    dispatch(setPosts(anecdotes));
+  };
 };
 
-export default reducer;
+export const createPost = (content) => {
+  return async (dispatch) => {
+    const newPost = await anecService.createNew(content);
+    dispatch(appendPost(newPost));
+  };
+};
+
+export const updVote = (object) => {
+  return async (dispatch) => {
+    const updated = await anecService.update(object);
+    dispatch(updateVotes(updated));
+  };
+};
+
+export default anecdoteSlice.reducer;
